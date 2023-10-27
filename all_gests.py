@@ -7,10 +7,18 @@ from time import sleep
 from skimage import io, transform
 
 def image_annotate_countdown(t_total, loc, rad_max=30, fps=10):
-    '''After every second, update the number of seconds remaining'''
+    ''' Adding two concentric circles, with the inner circle increasing from 0 to the radius of the outer circle
+        such that it reaches its maximum size when the inner circle overlaps with the outer circle. This animation
+        provides the user with an idea of how long there is left within the particular movement phase.
+        Inputs:
+            t_total[int]: the total time for the animation to take (duration fo the gesture)
+            loc[tup(int, int)]: location along image where to center the animation circles
+            rad_max[int/float]: the radius of the outer circle/max radius of the inner circle
+            fps[int]: frames per second, corresponding to how many plot updates we have per second
+    '''
     outline = plt.Circle(loc, rad_max, fc='blue',ec="blue")
     ax.add_patch(outline)
-    for frame in range((int(t_total))*fps): # update screen to match fps
+    for frame in range(int(t_total*fps)): # update screen to match fps
         t = frame/fps # compute time interval between each update
         rad = rad_max * (t/t_total) # radius of circle currently 
         circle = plt.Circle(loc, rad, fc='red', ec='blue')
