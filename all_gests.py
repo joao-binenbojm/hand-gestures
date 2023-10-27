@@ -3,10 +3,24 @@ from time import sleep, time
 import os
 import numpy as np
 import pickle
+from time import sleep
+from skimage import io, transform
 
+def image_annotate_countdown(t_total, loc, rad_max=30, fps=10):
+    '''After every second, update the number of seconds remaining'''
+    outline = plt.Circle(loc, rad_max, fc='blue',ec="blue")
+    ax.add_patch(outline)
+    for frame in range((int(t_total))*fps): # update screen to match fps
+        t = frame/fps # compute time interval between each update
+        rad = rad_max * (t/t_total) # radius of circle currently 
+        circle = plt.Circle(loc, rad, fc='red', ec='blue')
+        ax.add_patch(circle)
+        plt.pause(1/fps)
+
+
+# DEFINE INSTRUCTIONS DISPLAY OPTIONS
 DIR = '/home/joao/Desktop/hand-gestures/imgs_old'
-save_name = 'pilot3'
-
+save_name = 'pilot-delsys-joao-standing'
 # gests = [str(idx) for idx in range(1, 9)]
 # legend = ["Thumb up", "Extension of index and middle, flexion of the others",
 #           "Flexion of ring and little finger, extension of the others",
@@ -14,42 +28,41 @@ save_name = 'pilot3'
 #           "Fingers flexed together in fist", "Pointing index", "Adduction of extended fingers" 
 #           ]
 legend = ['extension', 'fist', 'flexion', 'openhand', 'pronation', 'radial-deviation', 'supination', 'ulnar-deviation']
-gests = legend
-rest_name = 'rest'
+gests = legend # labels for each movement
+rest_name = 'rest' # name of rest file
 t0 = time() # initial timestamp
 clock = { 'start': {str(idx): [] for idx in range(8)}, 'stop': {str(idx): [] for idx in range(8)} } # keeps track of start and stop of gestures
-clock['t0'] = t0
+clock['t0'] = t0 # add initial timestamp to our timestamp traker
+gest_dur, rest_dur = 7, 5 # duration of each phase in seconds
+rest_shape = (300, 600) # shape of rest image displayed
+im_shape = (500, 500) # shape of gesture images displayed
+reps = 2 # number of repetitions per gesture
+
+# BEGIN DYNAMIC IMAGE PLOTTING
+fig, ax = plt.subplots(figsize=(25,17)) # note we must use plt.subplots, not plt.subplot
+plt.tick_params(left = False, right = False , labelleft = False , 
+                labelbottom = False, bottom = False) 
 
 for idx, name in enumerate(gests):
-    instruction = 255*np.ones((2000, 2000, 3)).astype(np.uint8) # white image
-    plt.figure(figsize=(25,17))
-    plt.imshow(instruction)
-    plt.text(300, 1000, 'CLOSE THIS TO CONTINUE', fontsize=40)
-    plt.show()
-    for rep in range(1, 11):
-        # Show the rest instruction for 2.5s
-        fig = plt.figure(figsize=(25,17))
-        timer = fig.canvas.new_timer(interval = 2500) # keep rest instruction displayed for 2.5s, followed by a 0.5s transition
-        timer.add_callback(plt.close)
+    for rep in range(1, reps):
         img = plt.imread(os.path.join(DIR, rest_name + '.jpg'))
+        img = transform.resize(img, output_shape=rest_shape)
         plt.imshow(img)
         plt.title('REST')
-        timer.start()
-        plt.show()
-        sleep(0.5) # make transitions smoother between gestures
+        image_annotate_countdown(rest_dur, loc=(570, 25), rad_max=20)
+        plt.cla()
 
         # Show the hand-gestures for 5s
-        fig = plt.figure(figsize=(25,17))
-        timer = fig.canvas.new_timer(interval = 5000) # keep hand gesture instruction displayed for 5s
-        timer.add_callback(plt.close)
         img = plt.imread(os.path.join(DIR, name + '.jpg'))
+        img = transform.resize(img, output_shape=im_shape)
         plt.imshow(img)
         plt.title(legend[idx])
-        plt.text(40, 40, '#' + str(rep), fontsize=40, color='white')
-        timer.start()
+        ann = plt.text(20, 30, '#' + str(rep), fontsize=30, color='black')
         clock['start'][str(idx)].append(time()) # add time stamp to appropriate list
-        plt.show()
+        
+        image_annotate_countdown(gest_dur, loc=(450, 50))
         clock['stop'][str(idx)].append(time()) # add time stamp to appropriate list
+        plt.cla()
 
 # SAVE CLOCK
 file = open('{}.p'.format(save_name), 'wb')
